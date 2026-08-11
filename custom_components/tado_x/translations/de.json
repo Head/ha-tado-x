@@ -49,7 +49,9 @@
           "enable_weather": "Wettersensoren aktivieren",
           "enable_mobile_devices": "Tracking für mobile Geräte aktivieren",
           "enable_air_comfort": "Luftkomfortsensoren aktivieren",
-          "enable_running_times": "Heizzeit-Sensoren aktivieren"
+          "enable_running_times": "Heizzeit-Sensoren aktivieren",
+          "enable_heat_pump": "Wärmepumpen-Telemetrie aktivieren",
+          "enable_energy_iq": "Energy-IQ-Verbrauchsdaten aktivieren"
         },
         "data_description": {
           "has_auto_assist": "Aktivieren Sie diese Option, wenn Sie ein AI-Assist-Abonnement haben. Dadurch wird das Aktualisierungsintervall automatisch angepasst.",
@@ -57,7 +59,9 @@
           "enable_weather": "Aktiviert Sensoren für Außentemperatur, Sonnenintensität und Wetterbedingungen. Verwendet 1 API-Aufruf pro Aktualisierung.",
           "enable_mobile_devices": "Aktiviert Gerätetracker für Mobiltelefone mit Geofencing. Verwendet 1 API-Aufruf pro Aktualisierung.",
           "enable_air_comfort": "Aktiviert Sensoren für Luftfrische und Komfort pro Raum. Verwendet 1 API-Aufruf pro Aktualisierung.",
-          "enable_running_times": "Aktiviert den Heizzeit-Sensor für jeden Raum. Verwendet 1 API-Aufruf pro Aktualisierung."
+          "enable_running_times": "Aktiviert den Heizzeit-Sensor für jeden Raum. Verwendet 1 API-Aufruf pro Aktualisierung.",
+          "enable_heat_pump": "Liest Wärmepumpenstatus und elektrische Leistungsaufnahme. Verwendet 2 API-Aufrufe pro Aktualisierung.",
+          "enable_energy_iq": "Liest Energy-IQ-Verbrauch und COP-Daten über GraphQL. Verwendet 1 API-Aufruf pro Aktualisierung."
         }
       }
     }
@@ -190,6 +194,39 @@
           "MANUAL": "Manuell",
           "AUTO": "Auto (Geofencing)"
         }
+      },
+      "heat_pump_electric_power": {
+        "name": "Wärmepumpe elektrische Leistung"
+      },
+      "heat_pump_operation_state": {
+        "name": "Wärmepumpe Betriebszustand"
+      },
+      "heat_pump_space_operation_mode": {
+        "name": "Wärmepumpe Heizmodus"
+      },
+      "heat_pump_heating_activity": {
+        "name": "Wärmepumpe Heizaktivität"
+      },
+      "heat_pump_heating_setpoint": {
+        "name": "Wärmepumpe Heizsollwert"
+      },
+      "heat_pump_standby": {
+        "name": "Wärmepumpe Standby"
+      },
+      "heat_pump_connection_state": {
+        "name": "Wärmepumpe Verbindungsstatus"
+      },
+      "energy_iq_consumption_today": {
+        "name": "Energy IQ Verbrauch heute"
+      },
+      "energy_iq_month_total": {
+        "name": "Energy IQ Monatsverbrauch"
+      },
+      "heat_pump_cop_heating": {
+        "name": "Wärmepumpe COP Heizung"
+      },
+      "heat_pump_cop_hot_water": {
+        "name": "Wärmepumpe COP Warmwasser"
       },
       "outdoor_temperature": {
         "name": "Außentemperatur"
