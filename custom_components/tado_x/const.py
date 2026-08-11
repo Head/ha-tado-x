@@ -10,6 +10,7 @@ TADO_HOPS_API_URL: Final = "https://hops.tado.com"
 TADO_MY_API_URL: Final = "https://my.tado.com/api/v2"
 TADO_EIQ_API_URL: Final = "https://energy-insights.tado.com/api"
 TADO_MINDER_API_URL: Final = "https://minder.tado.com/v1"
+TADO_GRAPHQL_API_URL: Final = "https://ext.api.tado.com/apps/graphql"
 
 # OAuth2 Client ID (public client for device linking)
 TADO_CLIENT_ID: Final = "1bb50063-6b0c-4d11-bd99-387f4a91cc46"
@@ -44,6 +45,8 @@ CONF_ENABLE_MOBILE_DEVICES: Final = "enable_mobile_devices"
 CONF_ENABLE_AIR_COMFORT: Final = "enable_air_comfort"
 CONF_ENABLE_RUNNING_TIMES: Final = "enable_running_times"
 CONF_ENABLE_FLOW_TEMP: Final = "enable_flow_temp"
+CONF_ENABLE_HEAT_PUMP: Final = "enable_heat_pump"
+CONF_ENABLE_ENERGY_IQ: Final = "enable_energy_iq"
 
 # Base API calls (required): get_rooms, get_rooms_and_devices, get_home_state
 API_CALLS_BASE: Final = 3

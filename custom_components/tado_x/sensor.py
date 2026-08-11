@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import date
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -205,6 +206,67 @@ def _get_presence_mode(data: TadoXData) -> str:
     return "AUTO"
 
 
+def _heat_pump_value(data: TadoXData, key: str) -> Any:
+    """Read a value from the live heat-pump state payload."""
+    return data.heat_pump_state.get(key)
+
+
+def _heat_pump_heating(data: TadoXData, key: str) -> Any:
+    """Read a value from the heat-pump heating payload."""
+    return data.heat_pump.get("heating", {}).get(key)
+
+
+def _heat_pump_setpoint(data: TadoXData) -> Any:
+    """Read the current heating setpoint."""
+    return (
+        data.heat_pump.get("heating", {})
+        .get("currentBlockSetpoint", {})
+        .get("setpointValue", {})
+        .get("value")
+    )
+
+
+def _energy_iq_home(data: TadoXData) -> dict[str, Any]:
+    """Return the GraphQL home object from Energy IQ."""
+    return data.energy_iq.get("data", {}).get("home", {})
+
+
+def _energy_iq_requested_month(data: TadoXData) -> dict[str, Any]:
+    """Return the requested Energy IQ month aggregation."""
+    return (
+        _energy_iq_home(data)
+        .get("heatingInsights", {})
+        .get("consumption", {})
+        .get("monthlyAggregation", {})
+        .get("requestedMonth", {})
+    )
+
+
+def _energy_iq_today(data: TadoXData) -> float | None:
+    """Return today's Energy IQ consumption in the preferred unit."""
+    today = date.today().isoformat()
+    for entry in _energy_iq_requested_month(data).get("consumptionPerDate", []):
+        if entry.get("date") == today:
+            return entry.get("consumption")
+    return None
+
+
+def _energy_iq_month_total(data: TadoXData) -> float | None:
+    """Return the current month's Energy IQ total consumption."""
+    return _energy_iq_requested_month(data).get("totalConsumption")
+
+
+def _energy_iq_cop(data: TadoXData, source: str) -> float | None:
+    """Return a heat-pump COP value from Energy IQ."""
+    return (
+        _energy_iq_home(data)
+        .get("heatPump", {})
+        .get("consumption", {})
+        .get("cop", {})
+        .get(source)
+    )
+
+
 HOME_SENSORS: tuple[TadoXHomeSensorEntityDescription, ...] = (
     TadoXHomeSensorEntityDescription(
         key="api_calls_today",
@@ -265,6 +327,92 @@ HOME_SENSORS: tuple[TadoXHomeSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENUM,
         options=["AUTO", "MANUAL"],
         value_fn=_get_presence_mode,
+    ),
+    TadoXHomeSensorEntityDescription(
+        key="heat_pump_electric_power",
+        translation_key="heat_pump_electric_power",
+        native_unit_of_measurement="W",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:flash",
+        value_fn=lambda data: _heat_pump_value(data, "currentElectricityConsumptionInWatts"),
+    ),
+    TadoXHomeSensorEntityDescription(
+        key="heat_pump_operation_state",
+        translation_key="heat_pump_operation_state",
+        device_class=SensorDeviceClass.ENUM,
+        options=["NONE", "HEATING", "COOLING", "DOMESTIC_HOT_WATER"],
+        icon="mdi:heat-pump",
+        value_fn=lambda data: _heat_pump_value(data, "operationState"),
+    ),
+    TadoXHomeSensorEntityDescription(
+        key="heat_pump_space_operation_mode",
+        translation_key="heat_pump_space_operation_mode",
+        icon="mdi:heat-pump",
+        value_fn=lambda data: data.heat_pump.get("spaceOperationMode"),
+    ),
+    TadoXHomeSensorEntityDescription(
+        key="heat_pump_heating_activity",
+        translation_key="heat_pump_heating_activity",
+        native_unit_of_measurement="%",
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:percent",
+        value_fn=lambda data: _heat_pump_heating(data, "heatingActivityInPercent"),
+    ),
+    TadoXHomeSensorEntityDescription(
+        key="heat_pump_heating_setpoint",
+        translation_key="heat_pump_heating_setpoint",
+        native_unit_of_measurement="°C",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:thermometer",
+        value_fn=_heat_pump_setpoint,
+    ),
+    TadoXHomeSensorEntityDescription(
+        key="heat_pump_standby",
+        translation_key="heat_pump_standby",
+        icon="mdi:power-sleep",
+        value_fn=lambda data: _heat_pump_heating(data, "standbyActive"),
+    ),
+    TadoXHomeSensorEntityDescription(
+        key="heat_pump_connection_state",
+        translation_key="heat_pump_connection_state",
+        device_class=SensorDeviceClass.ENUM,
+        options=["CONNECTED", "DISCONNECTED"],
+        icon="mdi:connection",
+        value_fn=lambda data: _heat_pump_value(data, "connectionState"),
+    ),
+    TadoXHomeSensorEntityDescription(
+        key="energy_iq_consumption_today",
+        translation_key="energy_iq_consumption_today",
+        native_unit_of_measurement="kWh",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:counter",
+        value_fn=_energy_iq_today,
+    ),
+    TadoXHomeSensorEntityDescription(
+        key="energy_iq_month_total",
+        translation_key="energy_iq_month_total",
+        native_unit_of_measurement="kWh",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:calendar-month",
+        value_fn=_energy_iq_month_total,
+    ),
+    TadoXHomeSensorEntityDescription(
+        key="heat_pump_cop_heating",
+        translation_key="heat_pump_cop_heating",
+        icon="mdi:heat-pump",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: _energy_iq_cop(data, "heating"),
+    ),
+    TadoXHomeSensorEntityDescription(
+        key="heat_pump_cop_hot_water",
+        translation_key="heat_pump_cop_hot_water",
+        icon="mdi:water-boiler",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: _energy_iq_cop(data, "domesticHotWater"),
     ),
 )
 
@@ -327,6 +475,10 @@ async def async_setup_entry(
 
     # Add home-level sensors (API monitoring)
     for description in HOME_SENSORS:
+        if description.key.startswith("heat_pump_") and not coordinator.enable_heat_pump:
+            continue
+        if description.key.startswith("energy_iq_") and not coordinator.enable_energy_iq:
+            continue
         entities.append(TadoXHomeSensor(coordinator, description))
 
     # Add weather sensors (only if feature is enabled)
@@ -392,6 +544,18 @@ class TadoXHomeSensor(CoordinatorEntity[TadoXDataUpdateCoordinator], SensorEntit
     def native_value(self) -> Any:
         """Return the sensor value."""
         return self.entity_description.value_fn(self.coordinator.data)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose raw telemetry for fields not yet promoted to entities."""
+        attributes: dict[str, Any] = {}
+        if self.entity_description.key == "heat_pump_electric_power":
+            if self.coordinator.enable_heat_pump:
+                attributes["heat_pump_state"] = self.coordinator.data.heat_pump_state
+                attributes["heat_pump"] = self.coordinator.data.heat_pump
+            if self.coordinator.enable_energy_iq:
+                attributes["energy_iq"] = self.coordinator.data.energy_iq
+        return attributes
 
     @callback
     def _handle_coordinator_update(self) -> None:

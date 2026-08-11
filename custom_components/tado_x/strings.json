@@ -50,7 +50,9 @@
           "enable_mobile_devices": "Enable mobile device tracking",
           "enable_air_comfort": "Enable air comfort sensors",
           "enable_running_times": "Enable heating time sensors",
-          "enable_flow_temp": "Enable flow temperature control"
+          "enable_flow_temp": "Enable flow temperature control",
+          "enable_heat_pump": "Enable heat-pump telemetry",
+          "enable_energy_iq": "Enable Energy IQ consumption data"
         },
         "data_description": {
           "has_auto_assist": "Enable this if you have an Auto-Assist subscription. This will automatically adjust the update interval.",
@@ -59,7 +61,9 @@
           "enable_mobile_devices": "Enables device trackers for mobile phones with geofencing. Uses 1 API call per update.",
           "enable_air_comfort": "Enables air freshness and comfort level sensors per room. Uses 1 API call per update.",
           "enable_running_times": "Enables heating time today sensors per room. Uses 1 API call per update.",
-          "enable_flow_temp": "Enables max flow temperature slider and auto-adaptation switch (requires OpenTherm boiler). Uses 1 API call per update."
+          "enable_flow_temp": "Enables max flow temperature slider and auto-adaptation switch (requires OpenTherm boiler). Uses 1 API call per update.",
+          "enable_heat_pump": "Reads live heat-pump state and electrical consumption. Uses 2 API calls per update.",
+          "enable_energy_iq": "Reads daily Energy IQ consumption and heat-pump COP data via GraphQL. Uses 1 API call per update."
         }
       }
     }
@@ -211,6 +215,17 @@
           "MANUAL": "Manual Override"
         }
       },
+      "heat_pump_electric_power": { "name": "Heat Pump Electrical Power" },
+      "heat_pump_operation_state": { "name": "Heat Pump Operation State" },
+      "heat_pump_space_operation_mode": { "name": "Heat Pump Space Operation Mode" },
+      "heat_pump_heating_activity": { "name": "Heat Pump Heating Activity" },
+      "heat_pump_heating_setpoint": { "name": "Heat Pump Heating Setpoint" },
+      "heat_pump_standby": { "name": "Heat Pump Standby" },
+      "heat_pump_connection_state": { "name": "Heat Pump Connection State" },
+      "energy_iq_consumption_today": { "name": "Energy IQ Consumption Today" },
+      "energy_iq_month_total": { "name": "Energy IQ Month Total" },
+      "heat_pump_cop_heating": { "name": "Heat Pump COP Heating" },
+      "heat_pump_cop_hot_water": { "name": "Heat Pump COP Hot Water" },
       "outdoor_temperature": {
         "name": "Outdoor Temperature"
       },

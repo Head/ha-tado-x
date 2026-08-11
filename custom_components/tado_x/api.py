@@ -13,6 +13,7 @@ from .const import (
     TADO_AUTH_URL,
     TADO_CLIENT_ID,
     TADO_EIQ_API_URL,
+    TADO_GRAPHQL_API_URL,
     TADO_HOPS_API_URL,
     TADO_MINDER_API_URL,
     TADO_MY_API_URL,
@@ -714,6 +715,67 @@ class TadoXApi:
             "DELETE",
             f"{TADO_EIQ_API_URL}/homes/{self._home_id}/tariffs/{tariff_id}",
         )
+
+    async def get_heat_pump_state(self) -> dict[str, Any]:
+        """Get live heat-pump telemetry, including electrical power."""
+        if not self._home_id:
+            raise TadoXApiError("Home ID not set")
+        result = await self._request(
+            "GET",
+            f"{TADO_HOPS_API_URL}/homes/{self._home_id}/heatPump/state",
+        )
+        return result if isinstance(result, dict) else {}
+
+    async def get_heat_pump(self) -> dict[str, Any]:
+        """Get heat-pump capabilities, setpoints, and heating activity."""
+        if not self._home_id:
+            raise TadoXApiError("Home ID not set")
+        result = await self._request(
+            "GET",
+            f"{TADO_HOPS_API_URL}/homes/{self._home_id}/heatPump",
+        )
+        return result if isinstance(result, dict) else {}
+
+    async def get_energy_iq_insights(self, home_id: int | None = None) -> dict[str, Any]:
+        """Get Energy IQ consumption and heat-pump COP data via GraphQL."""
+        resolved_home_id = home_id or self._home_id
+        if not resolved_home_id:
+            raise TadoXApiError("Home ID not set")
+
+        query = """
+        query EnergyInsights($homeId: ID!) {
+          home(id: $homeId) {
+            energySavings { totalSavings yearMonth }
+            heatingInsights {
+              consumption {
+                isInPreferredUnit
+                unit
+                ecogaz
+                monthlyAggregation {
+                  requestedMonth {
+                    consumptionPerDate { date consumption costInCents hasData heating hotWater }
+                    forecastedConsumptionPerDate
+                    startDate
+                    endDate
+                    hasDomesticHotWater
+                    totalConsumption
+                    totalCostInCents
+                  }
+                  monthBefore { totalConsumption totalCostInCents startDate endDate }
+                  yearBefore { totalConsumption totalCostInCents startDate endDate }
+                }
+              }
+            }
+            heatPump { consumption { cop { heating domesticHotWater } } }
+          }
+        }
+        """
+        result = await self._request(
+            "POST",
+            TADO_GRAPHQL_API_URL,
+            json_data={"query": query, "variables": {"homeId": resolved_home_id}},
+        )
+        return result if isinstance(result, dict) else {}
 
     async def get_weather(self) -> dict[str, Any]:
         """Get weather data for the home.

@@ -125,6 +125,9 @@ class TadoXData:
     flow_temp_auto_adaptation: bool = False
     flow_temp_auto_value: int | None = None
     has_flow_temp_control: bool = False
+    heat_pump_state: dict[str, Any] = field(default_factory=dict)
+    heat_pump: dict[str, Any] = field(default_factory=dict)
+    energy_iq: dict[str, Any] = field(default_factory=dict)
 
 
 class TadoXDataUpdateCoordinator(DataUpdateCoordinator[TadoXData]):
@@ -143,6 +146,8 @@ class TadoXDataUpdateCoordinator(DataUpdateCoordinator[TadoXData]):
         enable_air_comfort: bool = True,
         enable_running_times: bool = True,
         enable_flow_temp: bool = True,
+        enable_heat_pump: bool = True,
+        enable_energy_iq: bool = True,
     ) -> None:
         """Initialize the coordinator."""
         # Determine scan interval based on subscription tier if not explicitly set
@@ -171,6 +176,8 @@ class TadoXDataUpdateCoordinator(DataUpdateCoordinator[TadoXData]):
         self.enable_air_comfort = enable_air_comfort
         self.enable_running_times = enable_running_times
         self.enable_flow_temp = enable_flow_temp
+        self.enable_heat_pump = enable_heat_pump
+        self.enable_energy_iq = enable_energy_iq
 
         _LOGGER.info(
             "Tado X coordinator initialized with %d second update interval (%s tier)",
@@ -199,6 +206,10 @@ class TadoXDataUpdateCoordinator(DataUpdateCoordinator[TadoXData]):
         if self.enable_air_comfort:
             calls += 1
         if self.enable_running_times:
+            calls += 1
+        if self.enable_heat_pump:
+            calls += 2
+        if self.enable_energy_iq:
             calls += 1
         return calls
 
@@ -488,6 +499,26 @@ class TadoXDataUpdateCoordinator(DataUpdateCoordinator[TadoXData]):
                     # (requires OpenTherm-compatible boiler control device)
                     _LOGGER.debug("Flow temperature optimization not available: %s", err)
                     data.has_flow_temp_control = False
+
+            if self.enable_heat_pump:
+                try:
+                    data.heat_pump_state = await self.api.get_heat_pump_state()
+                except Exception as err:
+                    _LOGGER.debug("Heat pump live state not available: %s", err)
+                    data.heat_pump_state = {}
+
+                try:
+                    data.heat_pump = await self.api.get_heat_pump()
+                except Exception as err:
+                    _LOGGER.debug("Heat pump details not available: %s", err)
+                    data.heat_pump = {}
+
+            if self.enable_energy_iq:
+                try:
+                    data.energy_iq = await self.api.get_energy_iq_insights()
+                except Exception as err:
+                    _LOGGER.debug("Energy IQ GraphQL data not available: %s", err)
+                    data.energy_iq = {}
 
             # Populate API stats (prefer real values from headers when available)
             data.api_calls_today = self.api.api_calls_today
