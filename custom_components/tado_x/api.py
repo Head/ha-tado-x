@@ -742,19 +742,21 @@ class TadoXApi:
         if not resolved_home_id:
             raise TadoXApiError("Home ID not set")
 
+        # The GraphQL API requires the requested month explicitly.  Keep this
+        # query limited to fields used by the integration: optional forecast
+        # fields have changed schema across Tado web-app versions.
+        requested_month = datetime.now().strftime("%Y-%m")
         query = """
-        query EnergyInsights($homeId: ID!) {
+        query EnergyInsights($homeId: ID!, $month: YearMonth!) {
           home(id: $homeId) {
-            energySavings { totalSavings yearMonth }
+            energySavings(month: $month) { totalSavings yearMonth }
             heatingInsights {
-              consumption {
+              consumption(month: $month) {
                 isInPreferredUnit
                 unit
-                ecogaz
                 monthlyAggregation {
                   requestedMonth {
                     consumptionPerDate { date consumption costInCents hasData heating hotWater }
-                    forecastedConsumptionPerDate
                     startDate
                     endDate
                     hasDomesticHotWater
@@ -773,7 +775,13 @@ class TadoXApi:
         result = await self._request(
             "POST",
             TADO_GRAPHQL_API_URL,
-            json_data={"query": query, "variables": {"homeId": resolved_home_id}},
+            json_data={
+                "query": query,
+                "variables": {
+                    "homeId": resolved_home_id,
+                    "month": requested_month,
+                },
+            },
         )
         if isinstance(result, dict) and result.get("errors"):
             _LOGGER.warning("Energy IQ GraphQL returned errors: %s", result["errors"])
