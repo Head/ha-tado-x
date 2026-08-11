@@ -479,7 +479,10 @@ async def async_setup_entry(
             continue
         if description.key.startswith("energy_iq_") and not coordinator.enable_energy_iq:
             continue
-        entities.append(TadoXHomeSensor(coordinator, description))
+        if description.key.startswith("heat_pump_") or description.key.startswith("energy_iq_"):
+            entities.append(TadoXHeatPumpSensor(coordinator, description))
+        else:
+            entities.append(TadoXHomeSensor(coordinator, description))
 
     # Add weather sensors (only if feature is enabled)
     if coordinator.enable_weather:
@@ -561,6 +564,21 @@ class TadoXHomeSensor(CoordinatorEntity[TadoXDataUpdateCoordinator], SensorEntit
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self.async_write_ha_state()
+
+
+class TadoXHeatPumpSensor(TadoXHomeSensor):
+    """Heat-pump and Energy IQ sensor attached to the synthetic CK04 device."""
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the Heat Pump Optimizer X device info."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, f"{self.coordinator.data.home_id}_ck04")},
+            name="Heat Pump Optimizer X",
+            manufacturer="Tado",
+            model="CK04",
+            via_device=(DOMAIN, str(self.coordinator.data.home_id)),
+        )
 
 
 class TadoXWeatherSensor(CoordinatorEntity[TadoXDataUpdateCoordinator], SensorEntity):

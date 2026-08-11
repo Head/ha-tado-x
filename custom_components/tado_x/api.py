@@ -775,6 +775,8 @@ class TadoXApi:
             TADO_GRAPHQL_API_URL,
             json_data={"query": query, "variables": {"homeId": resolved_home_id}},
         )
+        if isinstance(result, dict) and result.get("errors"):
+            _LOGGER.warning("Energy IQ GraphQL returned errors: %s", result["errors"])
         return result if isinstance(result, dict) else {}
 
     async def get_weather(self) -> dict[str, Any]:
